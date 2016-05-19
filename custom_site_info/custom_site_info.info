@@ -1,0 +1,5 @@
+name = Custom site information
+description = This is custom module created as a test module for assignment
+core = 7.x
+package = Custom
+configure = admin/config/system/site-information

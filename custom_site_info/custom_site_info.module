@@ -1,0 +1,74 @@
+<?php
+/**
+ * @file
+ * To show the node data in json format using siteapikey
+ */
+
+
+/**
+ * Implements hook_help().
+ */
+function custom_site_info_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#custom_site_info':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('This module also provides a URL that responds with a JSON representation of a given node with the content type "page" only if the previously submitted API Key and a node id (nid) of an appropriate node are present, otherwise it will respond with "access denied"') . '</p>';
+     
+    return $output;
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function custom_site_info_menu() {
+  $items['page_json/%/%node'] = array(
+    'access callback'   => true,
+    'page callback'     => 'node_json_data',
+    'page arguments'     => array(1,2)
+  );
+  return $items;
+}
+
+/**
+ * Menu callback; Provide the node detail json page.
+ */
+function node_json_data($apikey, $node) {
+  $siteapikey = '';
+  $siteapikey = variable_get('siteapikey');
+  if(!empty($siteapikey) && isset($node->type) && $node->type=='page' && $siteapikey == $apikey){
+    drupal_json_output($node);
+  }
+  else{               
+    drupal_access_denied();
+  }   
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function custom_site_info_form_alter(&$form, &$form_state, $form_id) {  	
+  if ($form_id == 'system_site_information_settings') {    
+    $form['site_information']['siteapikey'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Site API Key'),
+      '#default_value' =>  variable_get('siteapikey', 'No API Key yet'),
+      '#required' => TRUE
+    );
+    $form['actions']['submit']['#value'] = t('Update Configuration');
+    $form['#submit'][] = 'custom_site_info_form_submit';
+  }
+  return system_settings_form($form);
+}
+
+/**
+ * Process custom_site_info_form form submissions.
+ */
+function custom_site_info_form_submit($form, &$form_state) {
+  if(!empty($form_state['values']['siteapikey'])){
+    $siteapikey = $form_state['values']['siteapikey'];
+    drupal_set_message(t('Site API Key has been saved with %string value.', array('%string' => $siteapikey)));
+  }
+}
+?>
